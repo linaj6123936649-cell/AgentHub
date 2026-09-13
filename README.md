@@ -10,10 +10,7 @@
 
 感謝Codex幫我完成這一切
 
-資料庫使用MariaDB
-網頁伺服器使用Apache
-相關東西基本上都找的到
-要注意的是資料庫要架設
+## 執行畫面
 <img width="1917" height="907" alt="image" src="https://github.com/user-attachments/assets/351ca273-3083-41f4-8b8c-818f2d36b1f6" />
 <img width="1702" height="941" alt="image" src="https://github.com/user-attachments/assets/25a670bb-862b-46e7-b1d2-d89cd91c6cb1" />
 <img width="1596" height="905" alt="image" src="https://github.com/user-attachments/assets/394bee10-ebcc-44f9-b851-f0a8326e6700" />
@@ -44,3 +41,6 @@ php bin/migrate.php
 - Web Server 必須支援 `.htaccess` 與 `mod_rewrite`
 
 本系統使用 PHP + MariaDB 架構，可部署於 AppServ、Synology Web Station 或其他支援上述版本的 Apache PHP 環境。AppServ 本身只是整合套件，實際相容性取決於其中的 Apache、PHP 與 MariaDB 版本。
+
+目前程式標示的是最低相容版本，不代表一定綁定某個特定 AppServ 版本。
+
