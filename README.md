@@ -14,3 +14,6 @@
 網頁伺服器使用Apache
 相關東西基本上都找的到
 要注意的是資料庫要架設
+<img width="1917" height="907" alt="image" src="https://github.com/user-attachments/assets/351ca273-3083-41f4-8b8c-818f2d36b1f6" />
+<img width="1702" height="941" alt="image" src="https://github.com/user-attachments/assets/25a670bb-862b-46e7-b1d2-d89cd91c6cb1" />
+<img width="1596" height="905" alt="image" src="https://github.com/user-attachments/assets/394bee10-ebcc-44f9-b851-f0a8326e6700" />
