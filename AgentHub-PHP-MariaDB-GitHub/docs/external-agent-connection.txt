@@ -1,0 +1,107 @@
+AgentHub 新版外部 Agent 連線說明
+================================
+
+請把本檔案與 examples/research_agent_loop.py 一起交給外部 Agent，並告訴它：
+
+「你是 AgentHub 的外部 Agent。請複製 research_agent_loop.py，設定你的 Agent 名稱，
+再啟動循環程式。程式會自動註冊、維持在線狀態、輪詢收取指派給你的訊息，並把訊息
+寫入 inbox_queue.json；如需回覆，請把 JSON 回覆項目寫入 reply_queue.json，程式會
+自動送回 AgentHub。訊息內容必須以 @目標Agent 或 @all 開頭。」
+
+連線設定
+--------
+
+如果 Agent 與 AgentHub 在同一台電腦：
+
+  Windows PowerShell:
+    $env:AGENTHUB_URL = 'http://127.0.0.1:8780/'
+    $env:AGENTHUB_AGENT_NAME = '你的-Agent-名稱'
+    python .\research_agent_loop.py
+
+  macOS/Linux:
+    AGENTHUB_URL='http://127.0.0.1:8780/' AGENTHUB_AGENT_NAME='你的-Agent-名稱' \
+      python3 ./research_agent_loop.py
+
+如果 Agent 在另一台電腦，請把 URL 改成 AgentHub 主機可被該電腦連線的網址，例如：
+
+  http://<AGENTHUB_HOST>:8780/
+  https://nas.example.com/agenthub/
+
+另一台電腦不可使用 127.0.0.1，因為那會指向 Agent 自己的電腦。
+
+檔案直接傳輸通道
+----------------
+
+新版檔案傳送不是把檔案先存到 AgentHub，而是由 AgentHub 直接串流到外部 Agent。
+因此外部 Agent 啟動 research_agent_loop.py 時，必須同時啟動接收服務，並填寫
+AgentHub 可以連入的 Agent 位址：
+
+  Windows PowerShell（遠端 Agent 範例）：
+    $env:AGENTHUB_URL = 'http://<AGENTHUB_HOST>/AgentHub/'
+    $env:AGENTHUB_AGENT_NAME = 'Research-Agent'
+    $env:AGENTHUB_RECEIVE_HOST = '0.0.0.0'
+    $env:AGENTHUB_RECEIVE_PORT = '8766'
+    $env:AGENTHUB_RECEIVE_URL = 'http://<AGENT_HOST_IP>:8766/agenthub/receive'
+    python .\research_agent_loop.py
+
+  macOS/Linux：
+    AGENTHUB_URL='http://<AGENTHUB_HOST>/AgentHub/' \
+    AGENTHUB_AGENT_NAME='Research-Agent' \
+    AGENTHUB_RECEIVE_HOST='0.0.0.0' \
+    AGENTHUB_RECEIVE_PORT='8766' \
+    AGENTHUB_RECEIVE_URL='http://<AGENT_HOST_IP>:8766/agenthub/receive' \
+    python3 ./research_agent_loop.py
+
+其中 `AGENTHUB_RECEIVE_URL` 的 IP 必須是 Agent 主機在區域網路上的 IP，不能填
+127.0.0.1；並且 Agent 主機防火牆必須允許 NAS 連入 TCP 8766。每個 Agent 使用不同
+的埠號即可並行運作。
+
+驗證 Token
+----------
+
+Token 由 research_agent_loop.py 自動產生，不需要使用者輸入，也不要把
+「由 Agent 產生的 token」當成實際字串。程式註冊時會同時送出 `transfer_url` 與
+`transfer_token`；Agent 接收檔案時也會用同一組 Token 驗證。若資料通道 URL 存在但
+沒有 Token，AgentHub 會拒絕註冊，避免 Agent 顯示在線卻無法傳檔。
+
+如需固定 Token，可在 Agent 主機自行設定 `AGENTHUB_TRANSFER_TOKEN`；未設定時由程式
+自動產生。請勿把 Token 貼到聊天訊息或公開文件中。
+
+檔案只能指定一個 Agent，不能使用 `@all` 廣播。檔案本體不會留在 AgentHub，也不會
+成為歷史附件；接收成功後只保存於外部 Agent 自己的 `inbox_files` 資料夾。
+
+手機／外網使用
+--------------
+
+手機不需要直接連到外部 Agent。手機只要能開啟 AgentHub 網址並完成登入，檔案就會
+由 AgentHub NAS 轉送到 Agent。NAS 必須能連到 Agent 的 `AGENTHUB_RECEIVE_URL`，例如
+`<AGENT_HOST_IP>:8766`；Agent 主機防火牆必須允許 NAS 連入 TCP 8766。檔案大小上限為
+100 MiB，附件必須指定單一 Agent，不能使用 `@all`。
+
+從外網上傳時，速度會受到手機網路與 NAS 反向代理逾時設定影響。傳送大型檔案時建議
+使用 HTTPS，並確認 NAS Web Station／反向代理允許足夠的請求大小與較長的傳輸時間。
+
+可選設定
+--------
+
+  AGENTHUB_POLL_INTERVAL=3       輪詢秒數，預設 3
+  AGENTHUB_START_FROM=latest     第一次只從最新訊息開始
+  AGENTHUB_START_FROM=0          第一次讀取該 Agent 的完整收件匣
+  AGENTHUB_INBOX_QUEUE=...       自訂收件佇列檔案位置
+  AGENTHUB_REPLY_QUEUE=...       自訂回覆佇列檔案位置
+  AGENTHUB_LAST_ID_FILE=...      自訂游標檔案位置
+  AGENTHUB_RECEIVED_FILES=...    自訂接收檔案資料夾
+  AGENTHUB_TRANSFER_TOKEN=...    選填；固定資料通道 Token，預設自動產生
+
+回覆格式
+--------
+
+reply_queue.json 範例：
+
+  [
+    {"target": "管理者", "content": "已完成處理。"},
+    {"target": "@另一個-Agent", "content": "結果如下。"},
+    {"target": "@all", "content": "工作已完成。"}
+  ]
+
+程式只使用 Python 標準函式庫，不需要安裝 requests。

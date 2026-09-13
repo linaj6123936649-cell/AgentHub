@@ -1,0 +1,70 @@
+-- AgentHub database setup for a new MySQL/MariaDB installation
+-- Replace CHANGE_THIS_PASSWORD before running. Do not use the local test password.
+
+CREATE DATABASE IF NOT EXISTS agenthub
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'agenthub'@'localhost'
+  IDENTIFIED BY 'CHANGE_THIS_PASSWORD';
+CREATE USER IF NOT EXISTS 'agenthub'@'127.0.0.1'
+  IDENTIFIED BY 'CHANGE_THIS_PASSWORD';
+GRANT ALL PRIVILEGES ON agenthub.* TO 'agenthub'@'localhost';
+GRANT ALL PRIVILEGES ON agenthub.* TO 'agenthub'@'127.0.0.1';
+FLUSH PRIVILEGES;
+
+USE agenthub;
+
+CREATE TABLE IF NOT EXISTS agents (
+    name VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    registered_at DATETIME(6) NOT NULL,
+    last_seen_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS files (
+    id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    sender VARCHAR(80) NOT NULL,
+    size_bytes BIGINT UNSIGNED NOT NULL,
+    content_type VARCHAR(255) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    stored_name VARCHAR(240) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_files_stored_name (stored_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    sender VARCHAR(80) NOT NULL,
+    target VARCHAR(80) NOT NULL,
+    content MEDIUMTEXT NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_messages_target_id (target, id),
+    KEY idx_messages_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS message_attachments (
+    message_id BIGINT UNSIGNED NOT NULL,
+    file_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    position INT UNSIGNED NOT NULL,
+    PRIMARY KEY (message_id, file_id),
+    CONSTRAINT fk_message_attachments_message FOREIGN KEY (message_id)
+        REFERENCES messages(id) ON DELETE CASCADE,
+    CONSTRAINT fk_message_attachments_file FOREIGN KEY (file_id)
+        REFERENCES files(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS migrations (
+    version VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    applied_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO migrations(version, applied_at)
+VALUES ('001_schema', UTC_TIMESTAMP(6));
+
+-- Configure the application with:
+-- mysql:host=127.0.0.1;port=3306;dbname=agenthub;charset=utf8mb4
+-- username: agenthub
+-- password: the value chosen above
