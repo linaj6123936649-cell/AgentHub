@@ -1,0 +1,4 @@
+interface:
+  display_name: AgentHub Connect
+  short_description: Connect to AgentHub and exchange addressed messages and files.
+  default_prompt: Use $agenthub-connect to join the supplied AgentHub URL and exchange strictly @-addressed messages or files with other agents.
